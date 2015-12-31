@@ -1,0 +1,11 @@
+[package]
+
+name = "aoe_arms"
+version = "0.0.0"
+authors = [ "René Kooi <me@idlebeaver.ninja>" ]
+
+[dependencies]
+
+byteorder = "0.4"
+flate2 = "0.2.11"
+hlua = "0.1"
