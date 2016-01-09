@@ -24,7 +24,7 @@ struct ScenHeader<'a> {
     filename: &'a str,
     messages: ScenMessages<'a>,
     image: ScenImage<'a>,
-    map_size: u32
+    map: Map,
 }
 
 struct Player<'a> {
@@ -63,6 +63,11 @@ struct BaseResources {
 struct MapTile {
     terrain: u8,
     elevation: u8,
+}
+
+struct Map {
+    size: u32,
+    tiles: Vec<MapTile>
 }
 
 impl<'a> ScenHeader<'a> {
@@ -282,15 +287,9 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write_u32::<LittleEndian>(0));
 
         // Map tiles
-        try!(zlib_buf.write_u32::<LittleEndian>(self.map_size));
-        try!(zlib_buf.write_u32::<LittleEndian>(self.map_size));
-        for x in 0..self.map_size {
-            for y in 0..self.map_size {
-                try!(zlib_buf.write(
-                    &try!(MapTile::new(((x + y) % 40) as u8, 1).to_bytes())
-                ));
-            }
-        }
+        try!(zlib_buf.write(
+            &try!(self.map.to_bytes())
+        ));
 
         // Units sections
         try!(zlib_buf.write_u32::<LittleEndian>(9));
@@ -449,8 +448,50 @@ impl MapTile {
     }
 }
 
+impl Map {
+    fn new(size: u32) -> Map {
+        Map {
+            size: size,
+            tiles: Vec::with_capacity((size * size) as usize)
+        }
+    }
+
+    fn tile_at(&self, x: u32, y: u32) -> Option<&MapTile> {
+        let idx = (self.size * y + x) as usize;
+        if self.tiles.len() > idx {
+            Some(&self.tiles[idx])
+        } else {
+            None
+        }
+    }
+
+    fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
+        let size = self.size as usize;
+        let mut buf = Vec::with_capacity(
+            size * size * mem::size_of::<MapTile>() +
+            2 * mem::size_of::<u32>()
+        );
+        try!(buf.write_u32::<LittleEndian>(self.size));
+        try!(buf.write_u32::<LittleEndian>(self.size));
+        for x in 0..self.size {
+            for y in 0..self.size {
+                try!(buf.write(
+                    &try!(self.tile_at(x, y).unwrap().to_bytes())
+                ));
+            }
+        }
+        Ok(buf)
+    }
+}
+
 fn test(filename: &str) -> Result<(), io::Error> {
     let mut buf = try!(File::create(filename));
+    let mut map = Map::new(220);
+
+    for i in 0..map.tiles.capacity() {
+        map.tiles.push(MapTile::new(((i / 7) % 7) as u8, 1));
+    }
+
     let header = ScenHeader {
         version: b"1.21",
         header_type: 2,
@@ -500,8 +541,9 @@ fn test(filename: &str) -> Result<(), io::Error> {
             height: 0,
             include: 1,
         },
-        map_size: 220,
+        map: map,
     };
+
     buf.write_all(&try!(header.to_bytes())).map(|_| ())
 }
 
