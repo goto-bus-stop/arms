@@ -58,6 +58,14 @@ triggers.when(
 )
 ```
 
+## References
+
+This SCX file format struct on AoKHeaven:
+http://aok.heavengames.com/cgi-bin/aokcgi/display.cgi?action=ct&f=4,40134,0,30
+
+The [AgeScx](https://github.com/dderevjanik/AgeScx) library by [@dderevjanik](https://github.com/dderevjanik):
+https://github.com/dderevjanik/AgeScx
+
 ## Licence
 
 [MIT](./LICENSE)
