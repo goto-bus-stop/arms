@@ -28,6 +28,7 @@ struct Player<'a> {
     active: u32,
     human: u32,
     civilization: u32,
+    resources: BaseResources
 }
 
 struct ScenMessages<'a> {
@@ -45,6 +46,14 @@ struct ScenImage<'a> {
     width: i32,
     height: i32,
     include: i16
+}
+
+struct BaseResources {
+    gold: u32,
+    wood: u32,
+    food: u32,
+    stone: u32,
+    ore: u32,
 }
 
 impl<'a> ScenHeader<'a> {
@@ -156,16 +165,21 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write_u32::<LittleEndian>(0xFFFFFF9D));
 
         // Resources
-        for _ in 0..8 {
-            try!(zlib_buf.write_u32::<LittleEndian>(100 /* gold */));
-            try!(zlib_buf.write_u32::<LittleEndian>(200 /* wood */));
-            try!(zlib_buf.write_u32::<LittleEndian>(200 /* food */));
-            try!(zlib_buf.write_u32::<LittleEndian>(100 /* stone */));
-            try!(zlib_buf.write_u32::<LittleEndian>(0 /* ore */));
-            try!(zlib_buf.write_u32::<LittleEndian>(0 /* ??? */));
+        for i in 0..16 {
+            if self.players.len() > i {
+                let p = &self.players[i];
+                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.food));
+                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.wood));
+                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.gold));
+                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.stone));
+                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.ore));
+                try!(zlib_buf.write_u32::<LittleEndian>(0 /* ??? */));
+            }
+            else {
+                // Unused players
+                try!(zlib_buf.write(&vec![0; 6 * mem::size_of::<u32>()]));
+            }
         }
-        // Unused players
-        try!(zlib_buf.write(&[0; 6 * 8 * 4]));
 
         // Separator
         try!(zlib_buf.write_u32::<LittleEndian>(0xFFFFFF9D));
@@ -274,13 +288,20 @@ impl<'a> ScenHeader<'a> {
 
         // Resources again??
         for i in 0..8 {
-            try!(zlib_buf.write_f32::<LittleEndian>(100.0 /* gold */));
-            try!(zlib_buf.write_f32::<LittleEndian>(200.0 /* wood */));
-            try!(zlib_buf.write_f32::<LittleEndian>(200.0 /* food */));
-            try!(zlib_buf.write_f32::<LittleEndian>(100.0 /* stone */));
-            try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* ore */));
-            try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* ??? */));
-            try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* population */));
+            if self.players.len() > i {
+                let p = &self.players[i];
+                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.food as f32));
+                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.wood as f32));
+                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.gold as f32));
+                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.stone as f32));
+                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.ore as f32));
+                try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* ??? */));
+                try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* population */));
+            }
+            else {
+                // Unused players
+                try!(zlib_buf.write(&vec![0; 7 * mem::size_of::<f32>()]));
+            }
         }
 
         for i in 0..9 {
@@ -354,7 +375,19 @@ impl<'a> ScenHeader<'a> {
 
 impl<'a> Player<'a> {
     fn empty<'b>() -> Player<'b> {
-        Player { name: "", active: 0, human: 0, civilization: 0 }
+        Player {
+            name: "",
+            active: 0,
+            human: 0,
+            civilization: 0,
+            resources: BaseResources {
+                wood: 0,
+                food: 0,
+                gold: 0,
+                stone: 0,
+                ore: 0,
+            },
+        }
     }
 }
 
@@ -402,8 +435,32 @@ fn test(filename: &str) -> Result<(), io::Error> {
         instructions: "Build a fancy-pants base!",
         filename: filename,
         players: vec![
-            Player { name: "Hello World, from Rust!", active: 1, human: 2, civilization: 1 },
-            Player { name: "Filthy Opponent", active: 1, human: 0, civilization: 18 },
+            Player {
+                name: "Hello World, from Rust!",
+                active: 1,
+                human: 2,
+                civilization: 1,
+                resources: BaseResources {
+                    wood: 100,
+                    food: 200,
+                    gold: 300,
+                    stone: 400,
+                    ore: 0,
+                },
+            },
+            Player {
+                name: "Filthy Opponent",
+                active: 1,
+                human: 0,
+                civilization: 18,
+                resources: BaseResources {
+                    wood: 200,
+                    food: 200,
+                    gold: 100,
+                    stone: 200,
+                    ore: 0,
+                },
+            },
         ],
         messages: ScenMessages {
             objectives: "",
