@@ -187,7 +187,8 @@ impl<'a> ScenHeader<'a> {
         // Scenario goals: 10 * int32
         // Conquest; unknown; Relics; unknown; Exploration; unknown;
         // All; Mode; Score; Time Limit
-        try!(zlib_buf.write(&[0; 10 * 4]));
+        let scenario_goals_size = 10 * mem::size_of::<i32>();
+        try!(zlib_buf.write(&vec![0; scenario_goals_size]));
 
         // Diplomacy
         for fromPlayer in 0..16 {
@@ -348,8 +349,8 @@ impl<'a> ScenHeader<'a> {
             try!(zlib_buf.write_i32::<LittleEndian>(-1));
         }
 
-        try!(zlib_buf.write_u32::<LittleEndian>(2576980378));
-        try!(zlib_buf.write_u32::<LittleEndian>(1073322393));
+        try!(zlib_buf.write_u32::<LittleEndian>(0x9999999A));
+        try!(zlib_buf.write_u32::<LittleEndian>(0x3FF99999));
         try!(zlib_buf.write(&[0]));
         // Triggers
         try!(zlib_buf.write_i32::<LittleEndian>(0));
