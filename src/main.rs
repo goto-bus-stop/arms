@@ -5,7 +5,7 @@ use std::io;
 use std::io::prelude::*;
 use std::fs::File;
 use std::mem;
-use byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian as LE, WriteBytesExt};
 use flate2::Compression;
 use flate2::Flush;
 use flate2::Compress;
@@ -88,17 +88,17 @@ impl<'a> ScenHeader<'a> {
         let instructions_length = self.instructions.len() as i32;
         let header_length = 20 + instructions_length;
         try!(buf.write(self.version));
-        try!(buf.write_i32::<LittleEndian>(header_length));
-        try!(buf.write_i32::<LittleEndian>(self.header_type));
-        try!(buf.write_i32::<LittleEndian>(self.timestamp));
-        try!(buf.write_i32::<LittleEndian>(instructions_length));
+        try!(buf.write_i32::<LE>(header_length));
+        try!(buf.write_i32::<LE>(self.header_type));
+        try!(buf.write_i32::<LE>(self.timestamp));
+        try!(buf.write_i32::<LE>(instructions_length));
         try!(buf.write(self.instructions.as_bytes()));
-        try!(buf.write_i32::<LittleEndian>(0));
-        try!(buf.write_i32::<LittleEndian>(self.players.len() as i32));
+        try!(buf.write_i32::<LE>(0));
+        try!(buf.write_i32::<LE>(self.players.len() as i32));
 
         let mut zlib_buf = vec![];
-        try!(zlib_buf.write_u32::<LittleEndian>(19246));
-        try!(zlib_buf.write_f32::<LittleEndian>(1.22 /* UserPatch */));
+        try!(zlib_buf.write_u32::<LE>(19246));
+        try!(zlib_buf.write_f32::<LE>(1.22 /* UserPatch */));
         for i in 0..16 {
             if self.players.len() > i {
                 let name = self.players[i].name;
@@ -112,31 +112,31 @@ impl<'a> ScenHeader<'a> {
         for i in 0..16 {
             if self.players.len() > i {
                 // player name ID in string table
-                try!(zlib_buf.write_i32::<LittleEndian>(0));
+                try!(zlib_buf.write_i32::<LE>(0));
             } else {
-                try!(zlib_buf.write_i32::<LittleEndian>(0));
+                try!(zlib_buf.write_i32::<LE>(0));
             }
         }
 
         for i in 0..16 {
             if self.players.len() <= i {
-                try!(zlib_buf.write_u32::<LittleEndian>(0));
-                try!(zlib_buf.write_u32::<LittleEndian>(0));
-                try!(zlib_buf.write_u32::<LittleEndian>(0));
-                try!(zlib_buf.write_u32::<LittleEndian>(4));
+                try!(zlib_buf.write_u32::<LE>(0));
+                try!(zlib_buf.write_u32::<LE>(0));
+                try!(zlib_buf.write_u32::<LE>(0));
+                try!(zlib_buf.write_u32::<LE>(4));
                 continue;
             }
             let ref p = self.players[i];
-            try!(zlib_buf.write_u32::<LittleEndian>(p.active));
-            try!(zlib_buf.write_u32::<LittleEndian>(p.human));
-            try!(zlib_buf.write_u32::<LittleEndian>(p.civilization as u32));
-            try!(zlib_buf.write_u32::<LittleEndian>(4));
+            try!(zlib_buf.write_u32::<LE>(p.active));
+            try!(zlib_buf.write_u32::<LE>(p.human));
+            try!(zlib_buf.write_u32::<LE>(p.civilization as u32));
+            try!(zlib_buf.write_u32::<LE>(4));
         }
 
-        try!(zlib_buf.write_u32::<LittleEndian>(1));
+        try!(zlib_buf.write_u32::<LE>(1));
         try!(zlib_buf.write_all(&[0]));
-        try!(zlib_buf.write_f32::<LittleEndian>(-1.0));
-        try!(zlib_buf.write_u16::<LittleEndian>(self.filename.len() as u16));
+        try!(zlib_buf.write_f32::<LE>(-1.0));
+        try!(zlib_buf.write_u16::<LE>(self.filename.len() as u16));
         try!(zlib_buf.write_all(self.filename.as_bytes()));
 
         try!(zlib_buf.write_all(
@@ -144,9 +144,9 @@ impl<'a> ScenHeader<'a> {
         ));
 
         // cinematics
-        try!(zlib_buf.write_u16::<LittleEndian>(0));
-        try!(zlib_buf.write_u16::<LittleEndian>(0));
-        try!(zlib_buf.write_u16::<LittleEndian>(0));
+        try!(zlib_buf.write_u16::<LE>(0));
+        try!(zlib_buf.write_u16::<LE>(0));
+        try!(zlib_buf.write_u16::<LE>(0));
 
         try!(zlib_buf.write_all(
             &try!(self.image.to_bytes())
@@ -154,30 +154,30 @@ impl<'a> ScenHeader<'a> {
 
         for _ in 0..16 {
             // two 0-length strings
-            try!(zlib_buf.write_u16::<LittleEndian>(0));
-            try!(zlib_buf.write_u16::<LittleEndian>(0));
+            try!(zlib_buf.write_u16::<LE>(0));
+            try!(zlib_buf.write_u16::<LE>(0));
         }
 
         // Player AI names
         for _ in 0..8 {
-            try!(zlib_buf.write_u16::<LittleEndian>(0));
+            try!(zlib_buf.write_u16::<LE>(0));
         }
         // Unused players
         for _ in 0..8 {
             let name = "RandomGame";
-            try!(zlib_buf.write_u16::<LittleEndian>(name.len() as u16));
+            try!(zlib_buf.write_u16::<LE>(name.len() as u16));
             try!(zlib_buf.write(&name.as_bytes()));
         }
         // AI source code
         for _ in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
             // 0-length AI source code string
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
         }
         // Source code for unused players
         for _ in 0..(3 * 8) {
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
         }
 
         // AI type
@@ -188,18 +188,18 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write(&[0; 8]));
 
         // Separator
-        try!(zlib_buf.write_u32::<LittleEndian>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
 
         // Resources
         for i in 0..16 {
             if self.players.len() > i {
                 let p = &self.players[i];
-                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.food));
-                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.wood));
-                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.gold));
-                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.stone));
-                try!(zlib_buf.write_u32::<LittleEndian>(p.resources.ore));
-                try!(zlib_buf.write_u32::<LittleEndian>(0 /* ??? */));
+                try!(zlib_buf.write_u32::<LE>(p.resources.food));
+                try!(zlib_buf.write_u32::<LE>(p.resources.wood));
+                try!(zlib_buf.write_u32::<LE>(p.resources.gold));
+                try!(zlib_buf.write_u32::<LE>(p.resources.stone));
+                try!(zlib_buf.write_u32::<LE>(p.resources.ore));
+                try!(zlib_buf.write_u32::<LE>(0 /* ??? */));
             }
             else {
                 // Unused players
@@ -208,7 +208,7 @@ impl<'a> ScenHeader<'a> {
         }
 
         // Separator
-        try!(zlib_buf.write_u32::<LittleEndian>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
 
         // Scenario goals: 10 * int32
         // Conquest; unknown; Relics; unknown; Exploration; unknown;
@@ -219,7 +219,7 @@ impl<'a> ScenHeader<'a> {
         // Diplomacy
         for from_player in 0..16 {
             for to_player in 0..16 {
-                try!(zlib_buf.write_i32::<LittleEndian>(0));
+                try!(zlib_buf.write_i32::<LE>(0));
             }
         }
 
@@ -227,75 +227,75 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write(&[0; 11520]));
 
         // Separator
-        try!(zlib_buf.write_u32::<LittleEndian>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
 
         // Allied victory
         for player in 0..16 {
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
         }
 
         // Technology count??
         for player in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
         }
         for player in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
         // Technology something??
         for _ in 0..(16 * 30) {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
 
         // Unit count??
         for player in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
         }
         for player in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
         // Unit something??
         for _ in 0..(16 * 30) {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
 
         // Building count??
         for player in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(0));
+            try!(zlib_buf.write_i32::<LE>(0));
         }
         for player in 0..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
         // Buildings something??
         for _ in 0..(16 * 20) {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
 
         // ???
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
         // All Techs
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
 
         // Starting age
         for _ in 0..8 {
-            try!(zlib_buf.write_u32::<LittleEndian>(0));
+            try!(zlib_buf.write_u32::<LE>(0));
         }
         // Gaia
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
         // Unused
         for _ in 1..8 {
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
 
         // Separator
-        try!(zlib_buf.write_u32::<LittleEndian>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
 
         // Camera
-        try!(zlib_buf.write_i32::<LittleEndian>(0 /* x */));
-        try!(zlib_buf.write_i32::<LittleEndian>(0 /* y */));
+        try!(zlib_buf.write_i32::<LE>(0 /* x */));
+        try!(zlib_buf.write_i32::<LE>(0 /* y */));
 
         // AI type
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
 
         // Map tiles
         try!(zlib_buf.write(
@@ -303,21 +303,20 @@ impl<'a> ScenHeader<'a> {
         ));
 
         // Units sections
-        try!(zlib_buf.write_u32::<LittleEndian>(9));
+        try!(zlib_buf.write_u32::<LE>(9));
 
         // Resources again??
         for i in 0..8 {
             if self.players.len() > i {
                 let p = &self.players[i];
-                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.food as f32));
-                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.wood as f32));
-                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.gold as f32));
-                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.stone as f32));
-                try!(zlib_buf.write_f32::<LittleEndian>(p.resources.ore as f32));
-                try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* ??? */));
-                try!(zlib_buf.write_f32::<LittleEndian>(0.0 /* population */));
-            }
-            else {
+                try!(zlib_buf.write_f32::<LE>(p.resources.food as f32));
+                try!(zlib_buf.write_f32::<LE>(p.resources.wood as f32));
+                try!(zlib_buf.write_f32::<LE>(p.resources.gold as f32));
+                try!(zlib_buf.write_f32::<LE>(p.resources.stone as f32));
+                try!(zlib_buf.write_f32::<LE>(p.resources.ore as f32));
+                try!(zlib_buf.write_f32::<LE>(0.0 /* ??? */));
+                try!(zlib_buf.write_f32::<LE>(0.0 /* population */));
+            } else {
                 // Unused players
                 try!(zlib_buf.write(&vec![0; 7 * mem::size_of::<f32>()]));
             }
@@ -328,14 +327,14 @@ impl<'a> ScenHeader<'a> {
             if i > 0 && self.players.len() >= i {
                 let units = &self.players[i - 1].units;
                 println!("Units: p{} {}", i, units.len());
-                try!(zlib_buf.write_u32::<LittleEndian>(units.len() as u32));
+                try!(zlib_buf.write_u32::<LE>(units.len() as u32));
                 for unit in units {
                     try!(zlib_buf.write(
                         &try!(unit.to_bytes())
                     ));
                 }
             } else {
-                try!(zlib_buf.write_u32::<LittleEndian>(0));
+                try!(zlib_buf.write_u32::<LE>(0));
             }
             // for unit in players[i].units:
             //     putFloat(unit.x)
@@ -350,42 +349,42 @@ impl<'a> ScenHeader<'a> {
         }
 
         // Playable players
-        try!(zlib_buf.write_u32::<LittleEndian>(9));
+        try!(zlib_buf.write_u32::<LE>(9));
 
         for player in 1..9 {
             let name = "Promisory";
-            try!(zlib_buf.write_i16::<LittleEndian>(name.len() as i16));
+            try!(zlib_buf.write_i16::<LE>(name.len() as i16));
             try!(zlib_buf.write(&name.as_bytes()));
-            try!(zlib_buf.write_f32::<LittleEndian>(101.0 /* camera x */));
-            try!(zlib_buf.write_f32::<LittleEndian>(101.0 /* camera y */));
-            try!(zlib_buf.write_i16::<LittleEndian>(101 /* ?? */));
-            try!(zlib_buf.write_i16::<LittleEndian>(101 /* ?? */));
+            try!(zlib_buf.write_f32::<LE>(101.0 /* camera x */));
+            try!(zlib_buf.write_f32::<LE>(101.0 /* camera y */));
+            try!(zlib_buf.write_i16::<LE>(101 /* ?? */));
+            try!(zlib_buf.write_i16::<LE>(101 /* ?? */));
             try!(zlib_buf.write(&[0])); // allied victory (again?)
             // Diplomacy again
-            try!(zlib_buf.write_u16::<LittleEndian>(9));
+            try!(zlib_buf.write_u16::<LE>(9));
             try!(zlib_buf.write(&[0; 9]));
             // Diplo to gaia?? from gaia?
             for _ in 0..9 {
-                try!(zlib_buf.write_i32::<LittleEndian>(0));
+                try!(zlib_buf.write_i32::<LE>(0));
             }
             // Player colour
-            try!(zlib_buf.write_u32::<LittleEndian>(player));
+            try!(zlib_buf.write_u32::<LE>(player));
             // ???
-            try!(zlib_buf.write_f32::<LittleEndian>(2.0));
-            try!(zlib_buf.write_u16::<LittleEndian>(0));
+            try!(zlib_buf.write_f32::<LE>(2.0));
+            try!(zlib_buf.write_u16::<LE>(0));
             // ???
             try!(zlib_buf.write(&[0; 8 + 7]));
-            try!(zlib_buf.write_i32::<LittleEndian>(-1));
+            try!(zlib_buf.write_i32::<LE>(-1));
         }
 
-        try!(zlib_buf.write_u32::<LittleEndian>(0x9999999A));
-        try!(zlib_buf.write_u32::<LittleEndian>(0x3FF99999));
+        try!(zlib_buf.write_u32::<LE>(0x9999999A));
+        try!(zlib_buf.write_u32::<LE>(0x3FF99999));
         try!(zlib_buf.write(&[0]));
         // Triggers
-        try!(zlib_buf.write_i32::<LittleEndian>(0));
+        try!(zlib_buf.write_i32::<LE>(0));
 
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
-        try!(zlib_buf.write_u32::<LittleEndian>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
+        try!(zlib_buf.write_u32::<LE>(0));
 
         let mut compressed_buf = vec![];
         compressed_buf.reserve(zlib_buf.len());
@@ -424,7 +423,7 @@ impl<'a> Player<'a> {
 
 impl<'a> ScenMessages<'a> {
     fn message_to_bytes(buf: &mut Vec<u8>, message: &str) -> Result<(), io::Error> {
-        try!(buf.write_u16::<LittleEndian>(1 + (message.len() as u16)));
+        try!(buf.write_u16::<LE>(1 + (message.len() as u16)));
         try!(buf.write(&message.as_bytes()));
         try!(buf.write_u8(0));
         Ok(())
@@ -433,7 +432,7 @@ impl<'a> ScenMessages<'a> {
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
         for _ in 0..6 {
-            try!(buf.write_i32::<LittleEndian>(0));
+            try!(buf.write_i32::<LE>(0));
         }
         try!(ScenMessages::message_to_bytes(&mut buf, &self.objectives));
         try!(ScenMessages::message_to_bytes(&mut buf, &self.hints));
@@ -448,12 +447,12 @@ impl<'a> ScenMessages<'a> {
 impl<'a> ScenImage<'a> {
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
-        try!(buf.write_u16::<LittleEndian>(self.filename.len() as u16));
+        try!(buf.write_u16::<LE>(self.filename.len() as u16));
         try!(buf.write(&self.filename.as_bytes()));
-        try!(buf.write_i32::<LittleEndian>(if self.included { 1 } else { 0 }));
-        try!(buf.write_i32::<LittleEndian>(self.width));
-        try!(buf.write_i32::<LittleEndian>(self.height));
-        try!(buf.write_i16::<LittleEndian>(self.include));
+        try!(buf.write_i32::<LE>(if self.included { 1 } else { 0 }));
+        try!(buf.write_i32::<LE>(self.width));
+        try!(buf.write_i32::<LE>(self.height));
+        try!(buf.write_i16::<LE>(self.include));
         Ok(buf)
     }
 }
@@ -494,8 +493,8 @@ impl Map {
             size * size * mem::size_of::<MapTile>() +
             2 * mem::size_of::<u32>()
         );
-        try!(buf.write_u32::<LittleEndian>(self.size));
-        try!(buf.write_u32::<LittleEndian>(self.size));
+        try!(buf.write_u32::<LE>(self.size));
+        try!(buf.write_u32::<LE>(self.size));
         for x in 0..self.size {
             for y in 0..self.size {
                 try!(buf.write(
@@ -522,15 +521,15 @@ impl Unit {
 
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = Vec::with_capacity(29);
-        try!(buf.write_f32::<LittleEndian>(self.x));
-        try!(buf.write_f32::<LittleEndian>(self.y));
-        try!(buf.write_f32::<LittleEndian>(2.0));
-        try!(buf.write_u32::<LittleEndian>(self.id));
-        try!(buf.write_u16::<LittleEndian>(self.unit_type as u16));
+        try!(buf.write_f32::<LE>(self.x));
+        try!(buf.write_f32::<LE>(self.y));
+        try!(buf.write_f32::<LE>(2.0));
+        try!(buf.write_u32::<LE>(self.id));
+        try!(buf.write_u16::<LE>(self.unit_type as u16));
         try!(buf.write_i8(2));
-        try!(buf.write_f32::<LittleEndian>(self.angle));
-        try!(buf.write_u16::<LittleEndian>(self.frame));
-        try!(buf.write_i32::<LittleEndian>(self.garrison_id));
+        try!(buf.write_f32::<LE>(self.angle));
+        try!(buf.write_u16::<LE>(self.frame));
+        try!(buf.write_i32::<LE>(self.garrison_id));
         Ok(buf)
     }
 }
