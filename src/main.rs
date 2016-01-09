@@ -56,6 +56,11 @@ struct BaseResources {
     ore: u32,
 }
 
+struct MapTile {
+    terrain: u8,
+    elevation: u8,
+}
+
 impl<'a> ScenHeader<'a> {
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
@@ -276,11 +281,9 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write_u32::<LittleEndian>(self.map_size));
         for x in 0..self.map_size {
             for y in 0..self.map_size {
-                try!(zlib_buf.write(&[
-                    ((x + y) % 40) as u8, // Type
-                    1, // Elevation
-                    0, // ???
-                ]));
+                try!(zlib_buf.write(
+                    &try!(MapTile::new(((x + y) % 40) as u8, 1).to_bytes())
+                ));
             }
         }
 
@@ -424,6 +427,19 @@ impl <'a> ScenImage<'a> {
         try!(buf.write_i32::<LittleEndian>(self.height));
         try!(buf.write_i16::<LittleEndian>(self.include));
         Ok(buf)
+    }
+}
+
+impl MapTile {
+    fn new(terrain: u8, elevation: u8) -> MapTile {
+        MapTile {
+            terrain: terrain,
+            elevation: elevation,
+        }
+    }
+
+    fn to_bytes(&self) -> Result<[u8; 3], io::Error> {
+        Ok([ self.terrain, self.elevation, 0 ])
     }
 }
 
