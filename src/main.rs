@@ -11,6 +11,10 @@ use flate2::Flush;
 use flate2::Compress;
 use flate2::Status;
 
+mod consts;
+
+use consts::{Civilization};
+
 struct ScenHeader<'a> {
     version: &'a[u8; 4],
     header_type: i32,
@@ -27,7 +31,7 @@ struct Player<'a> {
     name: &'a str,
     active: u32,
     human: u32,
-    civilization: u32,
+    civilization: Civilization,
     resources: BaseResources
 }
 
@@ -106,9 +110,10 @@ impl<'a> ScenHeader<'a> {
                 try!(zlib_buf.write_u32::<LittleEndian>(4));
                 continue;
             }
-            try!(zlib_buf.write_u32::<LittleEndian>(self.players[i].active));
-            try!(zlib_buf.write_u32::<LittleEndian>(self.players[i].human));
-            try!(zlib_buf.write_u32::<LittleEndian>(self.players[i].civilization));
+            let ref p = self.players[i];
+            try!(zlib_buf.write_u32::<LittleEndian>(p.active));
+            try!(zlib_buf.write_u32::<LittleEndian>(p.human));
+            try!(zlib_buf.write_u32::<LittleEndian>(p.civilization as u32));
             try!(zlib_buf.write_u32::<LittleEndian>(4));
         }
 
@@ -383,7 +388,7 @@ impl<'a> Player<'a> {
             name: "",
             active: 0,
             human: 0,
-            civilization: 0,
+            civilization: Civilization::None,
             resources: BaseResources {
                 wood: 0,
                 food: 0,
@@ -456,7 +461,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
                 name: "Hello World, from Rust!",
                 active: 1,
                 human: 2,
-                civilization: 1,
+                civilization: Civilization::Britons,
                 resources: BaseResources {
                     wood: 100,
                     food: 200,
@@ -469,7 +474,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
                 name: "Filthy Opponent",
                 active: 1,
                 human: 0,
-                civilization: 18,
+                civilization: Civilization::Koreans,
                 resources: BaseResources {
                     wood: 200,
                     food: 200,
