@@ -196,8 +196,8 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write(&vec![0; scenario_goals_size]));
 
         // Diplomacy
-        for fromPlayer in 0..16 {
-            for toPlayer in 0..16 {
+        for from_player in 0..16 {
+            for to_player in 0..16 {
                 try!(zlib_buf.write_i32::<LittleEndian>(0));
             }
         }
@@ -372,7 +372,7 @@ impl<'a> ScenHeader<'a> {
 
         println!("compressed: {} -> {}", zlib_buf.len(), compressed_buf.len());
 
-        buf.write_all(&compressed_buf);
+        try!(buf.write_all(&compressed_buf));
         Ok(buf)
     }
 }
