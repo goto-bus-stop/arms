@@ -33,7 +33,7 @@ struct Player<'a> {
     human: u32,
     civilization: Civilization,
     resources: BaseResources,
-    units: Vec<Unit>
+    units: Vec<Unit>,
 }
 
 struct ScenMessages<'a> {
@@ -565,7 +565,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
                 units: vec![
                     Unit::new(UnitType::ScoutCavalry, 110.0, 110.0),
                     Unit::new(UnitType::ScoutCavalry, 111.0, 110.0),
-                ]
+                ],
             },
             Player {
                 name: "Filthy Opponent",
@@ -579,6 +579,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
                     stone: 200,
                     ore: 0,
                 },
+                units: vec![],
             },
         ],
         messages: ScenMessages {
