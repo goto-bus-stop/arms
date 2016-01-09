@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Civilization {
     None = 0,
