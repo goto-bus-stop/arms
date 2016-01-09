@@ -20,6 +20,7 @@ struct ScenHeader<'a> {
     filename: &'a str,
     messages: ScenMessages<'a>,
     image: ScenImage<'a>,
+    map_size: u32
 }
 
 struct Player<'a> {
@@ -256,10 +257,10 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write_u32::<LittleEndian>(0));
 
         // Map tiles
-        try!(zlib_buf.write_i32::<LittleEndian>(220 /* x */));
-        try!(zlib_buf.write_i32::<LittleEndian>(220 /* y */));
-        for x in 0..220 {
-            for y in 0..220 {
+        try!(zlib_buf.write_u32::<LittleEndian>(self.map_size));
+        try!(zlib_buf.write_u32::<LittleEndian>(self.map_size));
+        for x in 0..self.map_size {
+            for y in 0..self.map_size {
                 try!(zlib_buf.write(&[
                     ((x + y) % 40) as u8, // Type
                     1, // Elevation
@@ -418,7 +419,8 @@ fn test(filename: &str) -> Result<(), io::Error> {
             width: 0,
             height: 0,
             include: 1,
-        }
+        },
+        map_size: 220,
     };
     buf.write_all(&try!(header.to_bytes())).map(|_| ())
 }
