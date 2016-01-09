@@ -401,23 +401,24 @@ impl<'a> Player<'a> {
 }
 
 impl<'a> ScenMessages<'a> {
+    fn message_to_bytes(buf: &mut Vec<u8>, message: &str) -> Result<(), io::Error> {
+        try!(buf.write_u16::<LittleEndian>(1 + (message.len() as u16)));
+        try!(buf.write(&message.as_bytes()));
+        try!(buf.write_u8(0));
+        Ok(())
+    }
+
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
         for _ in 0..6 {
             try!(buf.write_i32::<LittleEndian>(0));
         }
-        try!(buf.write_u16::<LittleEndian>(self.objectives.len() as u16));
-        try!(buf.write(&self.objectives.as_bytes()));
-        try!(buf.write_u16::<LittleEndian>(self.hints.len() as u16));
-        try!(buf.write(&self.hints.as_bytes()));
-        try!(buf.write_u16::<LittleEndian>(self.victory.len() as u16));
-        try!(buf.write(&self.victory.as_bytes()));
-        try!(buf.write_u16::<LittleEndian>(self.loss.len() as u16));
-        try!(buf.write(&self.loss.as_bytes()));
-        try!(buf.write_u16::<LittleEndian>(self.history.len() as u16));
-        try!(buf.write(&self.history.as_bytes()));
-        try!(buf.write_u16::<LittleEndian>(self.scouts.len() as u16));
-        try!(buf.write(&self.scouts.as_bytes()));
+        try!(ScenMessages::message_to_bytes(&mut buf, &self.objectives));
+        try!(ScenMessages::message_to_bytes(&mut buf, &self.hints));
+        try!(ScenMessages::message_to_bytes(&mut buf, &self.victory));
+        try!(ScenMessages::message_to_bytes(&mut buf, &self.loss));
+        try!(ScenMessages::message_to_bytes(&mut buf, &self.history));
+        try!(ScenMessages::message_to_bytes(&mut buf, &self.scouts));
         Ok(buf)
     }
 }
