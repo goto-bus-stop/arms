@@ -13,7 +13,7 @@ use flate2::Status;
 
 mod consts;
 
-use consts::{Civilization};
+use consts::{Civilization, UnitType};
 
 struct ScenHeader<'a> {
     version: &'a[u8; 4],
@@ -32,7 +32,8 @@ struct Player<'a> {
     active: u32,
     human: u32,
     civilization: Civilization,
-    resources: BaseResources
+    resources: BaseResources,
+    units: Vec<Unit>
 }
 
 struct ScenMessages<'a> {
@@ -68,6 +69,16 @@ struct MapTile {
 struct Map {
     size: u32,
     tiles: Vec<MapTile>
+}
+
+struct Unit {
+    id: u32,
+    unit_type: UnitType,
+    x: f32,
+    y: f32,
+    angle: f32,
+    frame: u16,
+    garrison_id: i32,
 }
 
 impl<'a> ScenHeader<'a> {
@@ -314,7 +325,18 @@ impl<'a> ScenHeader<'a> {
 
         for i in 0..9 {
             // Zero units
-            try!(zlib_buf.write_u32::<LittleEndian>(0));
+            if i > 0 && self.players.len() >= i {
+                let units = &self.players[i - 1].units;
+                println!("Units: p{} {}", i, units.len());
+                try!(zlib_buf.write_u32::<LittleEndian>(units.len() as u32));
+                for unit in units {
+                    try!(zlib_buf.write(
+                        &try!(unit.to_bytes())
+                    ));
+                }
+            } else {
+                try!(zlib_buf.write_u32::<LittleEndian>(0));
+            }
             // for unit in players[i].units:
             //     putFloat(unit.x)
             //     putFloat(unit.y)
@@ -395,6 +417,7 @@ impl<'a> Player<'a> {
                 stone: 0,
                 ore: 0,
             },
+            units: vec![],
         }
     }
 }
@@ -422,7 +445,7 @@ impl<'a> ScenMessages<'a> {
     }
 }
 
-impl <'a> ScenImage<'a> {
+impl<'a> ScenImage<'a> {
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
         try!(buf.write_u16::<LittleEndian>(self.filename.len() as u16));
@@ -484,6 +507,34 @@ impl Map {
     }
 }
 
+impl Unit {
+    fn new(unit_type: UnitType, pos_x: f32, pos_y: f32) -> Unit {
+        Unit {
+            id: 1,
+            unit_type: unit_type,
+            x: pos_x,
+            y: pos_y,
+            angle: 0.0,
+            frame: 0,
+            garrison_id: 0,
+        }
+    }
+
+    fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
+        let mut buf = Vec::with_capacity(29);
+        try!(buf.write_f32::<LittleEndian>(self.x));
+        try!(buf.write_f32::<LittleEndian>(self.y));
+        try!(buf.write_f32::<LittleEndian>(2.0));
+        try!(buf.write_u32::<LittleEndian>(self.id));
+        try!(buf.write_u16::<LittleEndian>(self.unit_type as u16));
+        try!(buf.write_i8(2));
+        try!(buf.write_f32::<LittleEndian>(self.angle));
+        try!(buf.write_u16::<LittleEndian>(self.frame));
+        try!(buf.write_i32::<LittleEndian>(self.garrison_id));
+        Ok(buf)
+    }
+}
+
 fn test(filename: &str) -> Result<(), io::Error> {
     let mut buf = try!(File::create(filename));
     let mut map = Map::new(220);
@@ -511,6 +562,10 @@ fn test(filename: &str) -> Result<(), io::Error> {
                     stone: 400,
                     ore: 0,
                 },
+                units: vec![
+                    Unit::new(UnitType::ScoutCavalry, 110.0, 110.0),
+                    Unit::new(UnitType::ScoutCavalry, 111.0, 110.0),
+                ]
             },
             Player {
                 name: "Filthy Opponent",
