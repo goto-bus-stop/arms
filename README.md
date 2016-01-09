@@ -1,8 +1,8 @@
-# Arms
+# ⚔ Arms
 
 Random Map Scripting for Age of Empires 2.
 
-## What is this‽
+## ⛨ What is this‽
 
 It's mostly me trying out Rust!
 
@@ -58,7 +58,7 @@ triggers.when(
 )
 ```
 
-## References
+## ⮳ References
 
 This SCX file format struct on AoKHeaven:
 http://aok.heavengames.com/cgi-bin/aokcgi/display.cgi?action=ct&f=4,40134,0,30
