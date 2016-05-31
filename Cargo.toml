@@ -9,3 +9,5 @@ authors = [ "René Kooi <me@idlebeaver.ninja>" ]
 byteorder = "0.4"
 flate2 = "0.2.11"
 hlua = "0.1"
+noise = "0.1.5"
+rand = "0.3"

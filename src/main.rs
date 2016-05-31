@@ -1,19 +1,22 @@
 extern crate byteorder;
 extern crate flate2;
+extern crate noise;
+extern crate rand;
 
 use std::io;
 use std::io::prelude::*;
 use std::fs::File;
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
-use flate2::Compression;
-use flate2::Flush;
-use flate2::Compress;
-use flate2::Status;
+use flate2::{Compression, Flush, Compress, Status};
+
+use noise::{Brownian3, Seed};
 
 mod consts;
 
-use consts::{Civilization, UnitType};
+use consts::{Civilization, UnitType, Terrain};
+
+const HEADER_SEPARATOR: u32 = 0xFFFFFF9D;
 
 struct ScenHeader<'a> {
     version: &'a[u8; 4],
@@ -50,7 +53,7 @@ struct ScenImage<'a> {
     included: bool,
     width: i32,
     height: i32,
-    include: i16
+    include: i16,
 }
 
 struct BaseResources {
@@ -68,7 +71,7 @@ struct MapTile {
 
 struct Map {
     size: u32,
-    tiles: Vec<MapTile>
+    tiles: Vec<MapTile>,
 }
 
 struct Unit {
@@ -187,8 +190,7 @@ impl<'a> ScenHeader<'a> {
         // Unused players
         try!(zlib_buf.write(&[0; 8]));
 
-        // Separator
-        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(HEADER_SEPARATOR));
 
         // Resources
         for i in 0..16 {
@@ -207,8 +209,7 @@ impl<'a> ScenHeader<'a> {
             }
         }
 
-        // Separator
-        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(HEADER_SEPARATOR));
 
         // Scenario goals: 10 * int32
         // Conquest; unknown; Relics; unknown; Exploration; unknown;
@@ -226,8 +227,7 @@ impl<'a> ScenHeader<'a> {
         // ???
         try!(zlib_buf.write(&[0; 11520]));
 
-        // Separator
-        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(HEADER_SEPARATOR));
 
         // Allied victory
         for player in 0..16 {
@@ -287,8 +287,7 @@ impl<'a> ScenHeader<'a> {
             try!(zlib_buf.write_i32::<LE>(-1));
         }
 
-        // Separator
-        try!(zlib_buf.write_u32::<LE>(0xFFFFFF9D));
+        try!(zlib_buf.write_u32::<LE>(HEADER_SEPARATOR));
 
         // Camera
         try!(zlib_buf.write_i32::<LE>(0 /* x */));
@@ -537,9 +536,22 @@ impl Unit {
 fn test(filename: &str) -> Result<(), io::Error> {
     let mut buf = try!(File::create(filename));
     let mut map = Map::new(220);
-
-    for i in 0..map.tiles.capacity() {
-        map.tiles.push(MapTile::new(((i / 7) % 7) as u8, 1));
+    let seed = Seed::new(rand::random::<u32>());
+    let noise = Brownian3::new(noise::perlin3, 4).wavelength(32.0);
+    for x in 0..map.size {
+        for y in 0..map.size {
+            let value = noise.apply(&seed, &[x as f32, y as f32, 0.0]);
+            map.tiles.push(MapTile::new(
+                (if value > 0.5 { Terrain::Grass }
+                else if value > 0.0 { Terrain::Dirt3 }
+                else if value < -0.5 { Terrain::Water2 }
+                else { Terrain::SnowRoad }) as u8,
+                // FIXME Sometimes the elevation difference between this tile and an adjacent tile
+                // is more than 1. AoC doesn't really support that (it doesn't crash, but it isn't
+                // pretty), so it should be smoothed out.
+                ((value + 2.0) * 3.0) as u8
+            ));
+        }
     }
 
     let header = ScenHeader {

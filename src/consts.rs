@@ -129,3 +129,37 @@ pub enum UnitType {
     TurtleShip = 831,
     EliteTurtleShip = 832,
 }
+
+#[allow(dead_code)]
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Terrain {
+    Grass = 0,
+    Water,
+    Beach,
+    Dirt3,
+    Shallows,
+    Dirt,
+    Farm1,
+    Farm2,
+    Grass3,
+    Forest,
+    Dirt2,
+    Grass2,
+    PalmDesert,
+    SnowForest,
+    Water2,
+    Water3,
+    Road,
+    Road2,
+    Ice,
+    Foundation,
+    FarmCnst1,
+    FarmCnst2,
+    FarmCnst3,
+    Snow,
+    SnowDirt,
+    SnowGrass,
+    SnowRoad,
+    SnowRoad2,
+    KOH,
+}
