@@ -11,7 +11,7 @@ write Arms scripts in Lua or Moonscript, and the Arms app will output a Scenario
 file for you.
 
 It'll be aimed mostly at generating Random Map-style scenarios, like an
-**A** dvanced **R** andom **M** ap **S** cripting language, with support for
+**A**dvanced **R**andom **M**ap **S**cripting language, with support for
 generating triggers and very specific structures.
 
 Something liiiike…
