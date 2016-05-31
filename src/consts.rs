@@ -163,3 +163,18 @@ pub enum Terrain {
     SnowRoad2,
     KOH,
 }
+
+#[allow(dead_code)]
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum MapSize {
+    Tiny = 120,
+    Small = 144,
+    Medium = 168,
+    Normal = 200,
+    Large = 220,
+    Giant = 240,
+    // Max size in AoC 1.0c (and UserPatch). HD supports larger.
+    Max = 255,
+    // Whaaaaat.
+    Ludicrous = 510,
+}

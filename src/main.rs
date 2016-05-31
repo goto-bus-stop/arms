@@ -1,7 +1,10 @@
 extern crate byteorder;
 extern crate flate2;
-extern crate noise;
 extern crate rand;
+
+mod consts;
+mod map;
+mod world;
 
 use std::io;
 use std::io::prelude::*;
@@ -10,11 +13,9 @@ use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
 use flate2::{Compression, Flush, Compress, Status};
 
-use noise::{Brownian3, Seed};
-
-mod consts;
-
 use consts::{Civilization, UnitType, Terrain};
+use map::Map;
+use world::World;
 
 const HEADER_SEPARATOR: u32 = 0xFFFFFF9D;
 
@@ -62,16 +63,6 @@ struct BaseResources {
     food: u32,
     stone: u32,
     ore: u32,
-}
-
-struct MapTile {
-    terrain: u8,
-    elevation: u8,
-}
-
-struct Map {
-    size: u32,
-    tiles: Vec<MapTile>,
 }
 
 struct Unit {
@@ -456,55 +447,6 @@ impl<'a> ScenImage<'a> {
     }
 }
 
-impl MapTile {
-    fn new(terrain: u8, elevation: u8) -> MapTile {
-        MapTile {
-            terrain: terrain,
-            elevation: elevation,
-        }
-    }
-
-    fn to_bytes(&self) -> Result<[u8; 3], io::Error> {
-        Ok([ self.terrain, self.elevation, 0 ])
-    }
-}
-
-impl Map {
-    fn new(size: u32) -> Map {
-        Map {
-            size: size,
-            tiles: Vec::with_capacity((size * size) as usize)
-        }
-    }
-
-    fn tile_at(&self, x: u32, y: u32) -> Option<&MapTile> {
-        let idx = (self.size * y + x) as usize;
-        if self.tiles.len() > idx {
-            Some(&self.tiles[idx])
-        } else {
-            None
-        }
-    }
-
-    fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
-        let size = self.size as usize;
-        let mut buf = Vec::with_capacity(
-            size * size * mem::size_of::<MapTile>() +
-            2 * mem::size_of::<u32>()
-        );
-        try!(buf.write_u32::<LE>(self.size));
-        try!(buf.write_u32::<LE>(self.size));
-        for x in 0..self.size {
-            for y in 0..self.size {
-                try!(buf.write(
-                    &try!(self.tile_at(x, y).unwrap().to_bytes())
-                ));
-            }
-        }
-        Ok(buf)
-    }
-}
-
 impl Unit {
     fn new(unit_type: UnitType, pos_x: f32, pos_y: f32) -> Unit {
         Unit {
@@ -535,24 +477,8 @@ impl Unit {
 
 fn test(filename: &str) -> Result<(), io::Error> {
     let mut buf = try!(File::create(filename));
-    let mut map = Map::new(220);
-    let seed = Seed::new(rand::random::<u32>());
-    let noise = Brownian3::new(noise::perlin3, 4).wavelength(32.0);
-    for x in 0..map.size {
-        for y in 0..map.size {
-            let value = noise.apply(&seed, &[x as f32, y as f32, 0.0]);
-            map.tiles.push(MapTile::new(
-                (if value > 0.5 { Terrain::Grass }
-                else if value > 0.0 { Terrain::Dirt3 }
-                else if value < -0.5 { Terrain::Water2 }
-                else { Terrain::SnowRoad }) as u8,
-                // FIXME Sometimes the elevation difference between this tile and an adjacent tile
-                // is more than 1. AoC doesn't really support that (it doesn't crash, but it isn't
-                // pretty), so it should be smoothed out.
-                ((value + 2.0) * 3.0) as u8
-            ));
-        }
-    }
+    let mut world = World::new();
+    world.base_terrain = Terrain::SnowRoad;
 
     let header = ScenHeader {
         version: b"1.21",
@@ -608,7 +534,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
             height: 0,
             include: 1,
         },
-        map: map,
+        map: world.generate_map(),
     };
 
     buf.write_all(&try!(header.to_bytes())).map(|_| ())
