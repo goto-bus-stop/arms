@@ -1,3 +1,14 @@
+use std::iter::Iterator;
+
+pub struct Coordinate {
+    pub x: u32,
+    pub y: u32
+}
+
+pub trait Selection {
+    fn coordinates(&self) -> Vec<Coordinate>;
+}
+
 pub struct Rectangle {
     pub x: u32,
     pub y: u32,
@@ -13,5 +24,17 @@ impl Rectangle {
             width: width,
             height: height
         }
+    }
+}
+
+impl Selection for Rectangle {
+    fn coordinates(&self) -> Vec<Coordinate> {
+        let mut tiles = vec![];
+        for x in self.x..(self.x + self.width) {
+            for y in self.y..(self.y + self.height) {
+                tiles.push(Coordinate { x: x, y: y });
+            }
+        }
+        tiles
     }
 }
