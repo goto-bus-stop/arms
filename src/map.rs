@@ -2,6 +2,8 @@ use std::io::{Write, Error};
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
 
+use selection::Rectangle;
+
 pub struct MapTile {
     terrain: u8,
     elevation: u8,
@@ -20,6 +22,20 @@ impl MapTile {
         }
     }
 
+    pub fn with_terrain(&self, terrain: u8) -> MapTile {
+        MapTile {
+            terrain: terrain,
+            elevation: self.elevation
+        }
+    }
+
+    pub fn with_elevation(&self, elevation: u8) -> MapTile {
+        MapTile {
+            terrain: self.terrain,
+            elevation: elevation
+        }
+    }
+
     pub fn to_bytes(&self) -> Result<[u8; 3], Error> {
         Ok([ self.terrain, self.elevation, 0 ])
     }
@@ -33,12 +49,86 @@ impl Map {
         }
     }
 
-    pub fn tile_at(&self, x: u32, y: u32) -> Option<&MapTile> {
+    pub fn tile_at(&self, x: u32, y: u32) -> Option<MapTile> {
         let idx = (self.size * y + x) as usize;
         if idx < self.tiles.len() {
-            Some(&self.tiles[idx])
+            Some(MapTile::new(self.tiles[idx].terrain, self.tiles[idx].elevation))
         } else {
             None
+        }
+    }
+
+    pub fn put_tile(&mut self, x: u32, y: u32, tile: MapTile) {
+        let idx = (self.size * y + x) as usize;
+        if idx < self.tiles.len() {
+            self.tiles[idx] = tile;
+        }
+    }
+
+    pub fn elevation_at(&self, x: u32, y: u32) -> Option<u8> {
+        match self.tile_at(x, y) {
+            Some(tile) => Some(tile.elevation),
+            None => None
+        }
+    }
+
+
+    pub fn tile_neighbours(&self, x: u32, y: u32) -> Vec<(u32, u32)> {
+        let candidates = vec![
+            (x - 1, y - 1),
+            (x - 1, y),
+            (x - 1, y + 1),
+            (x, y - 1),
+            (x, y + 1),
+            (x + 1, y - 1),
+            (x + 1, y),
+            (x + 1, y + 1),
+        ];
+        let mut neighbours = vec![];
+        for candidate in candidates {
+            if 0 <= candidate.0 && candidate.0 < self.size &&
+               0 <= candidate.1 && candidate.1 < self.size {
+                neighbours.push(candidate)
+            }
+        }
+        neighbours
+    }
+
+    pub fn elevate(&mut self, x: u32, y: u32, elevation: u8) {
+        match self.tile_at(x, y) {
+            Some(tile) => {
+                self.put_tile(x, y, tile.with_elevation(elevation));
+                for c in self.tile_neighbours(x, y) {
+                    let neighbour = self.tile_at(c.0, c.1).unwrap();
+                    let current_difference = elevation as i8 - neighbour.elevation as i8;
+                    if current_difference.abs() > 1 {
+                        let desired_difference: i8 = if neighbour.elevation > elevation { 1 } else { -1 };
+                        self.elevate(c.0, c.1, (elevation as i8 + desired_difference) as u8);
+                    }
+                }
+            },
+            None => ()
+        }
+    }
+
+    pub fn flatten(&mut self, part: Rectangle) {
+        let mut weighted_elevation = 0;
+        for x in part.x..(part.x + part.width) {
+            for y in part.y..(part.y + part.height) {
+                match self.tile_at(x, y) {
+                    Some(tile) => weighted_elevation += tile.elevation as u32,
+                    None => ()
+                }
+            }
+        }
+        let tiles = part.width * part.height;
+        self.flatten_to(part, (weighted_elevation / tiles) as u8)
+    }
+    pub fn flatten_to(&mut self, part: Rectangle, elevation: u8) {
+        for x in part.x..(part.x + part.width) {
+            for y in part.y..(part.y + part.height) {
+                self.elevate(x, y, elevation)
+            }
         }
     }
 

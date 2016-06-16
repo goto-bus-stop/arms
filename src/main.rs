@@ -5,6 +5,7 @@ extern crate rand;
 mod consts;
 mod map;
 mod player;
+mod selection;
 mod unit;
 mod world;
 
