@@ -4,6 +4,8 @@ extern crate rand;
 
 mod consts;
 mod map;
+mod player;
+mod unit;
 mod world;
 
 use std::io;
@@ -15,6 +17,8 @@ use flate2::{Compression, Flush, Compress, Status};
 
 use consts::{Civilization, UnitType, Terrain};
 use map::Map;
+use player::{BaseResources, Player};
+use unit::Unit;
 use world::World;
 
 const HEADER_SEPARATOR: u32 = 0xFFFFFF9D;
@@ -29,15 +33,6 @@ struct ScenHeader<'a> {
     messages: ScenMessages<'a>,
     image: ScenImage<'a>,
     map: Map,
-}
-
-struct Player<'a> {
-    name: &'a str,
-    active: u32,
-    human: u32,
-    civilization: Civilization,
-    resources: BaseResources,
-    units: Vec<Unit>,
 }
 
 struct ScenMessages<'a> {
@@ -55,24 +50,6 @@ struct ScenImage<'a> {
     width: i32,
     height: i32,
     include: i16,
-}
-
-struct BaseResources {
-    gold: u32,
-    wood: u32,
-    food: u32,
-    stone: u32,
-    ore: u32,
-}
-
-struct Unit {
-    id: u32,
-    unit_type: UnitType,
-    x: f32,
-    y: f32,
-    angle: f32,
-    frame: u16,
-    garrison_id: i32,
 }
 
 impl<'a> ScenHeader<'a> {
@@ -392,25 +369,6 @@ impl<'a> ScenHeader<'a> {
     }
 }
 
-impl<'a> Player<'a> {
-    fn empty<'b>() -> Player<'b> {
-        Player {
-            name: "",
-            active: 0,
-            human: 0,
-            civilization: Civilization::None,
-            resources: BaseResources {
-                wood: 0,
-                food: 0,
-                gold: 0,
-                stone: 0,
-                ore: 0,
-            },
-            units: vec![],
-        }
-    }
-}
-
 impl<'a> ScenMessages<'a> {
     fn message_to_bytes(buf: &mut Vec<u8>, message: &str) -> Result<(), io::Error> {
         try!(buf.write_u16::<LE>(1 + (message.len() as u16)));
@@ -443,34 +401,6 @@ impl<'a> ScenImage<'a> {
         try!(buf.write_i32::<LE>(self.width));
         try!(buf.write_i32::<LE>(self.height));
         try!(buf.write_i16::<LE>(self.include));
-        Ok(buf)
-    }
-}
-
-impl Unit {
-    fn new(unit_type: UnitType, pos_x: f32, pos_y: f32) -> Unit {
-        Unit {
-            id: 1,
-            unit_type: unit_type,
-            x: pos_x,
-            y: pos_y,
-            angle: 0.0,
-            frame: 0,
-            garrison_id: 0,
-        }
-    }
-
-    fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
-        let mut buf = Vec::with_capacity(29);
-        try!(buf.write_f32::<LE>(self.x));
-        try!(buf.write_f32::<LE>(self.y));
-        try!(buf.write_f32::<LE>(2.0));
-        try!(buf.write_u32::<LE>(self.id));
-        try!(buf.write_u16::<LE>(self.unit_type as u16));
-        try!(buf.write_i8(2));
-        try!(buf.write_f32::<LE>(self.angle));
-        try!(buf.write_u16::<LE>(self.frame));
-        try!(buf.write_i32::<LE>(self.garrison_id));
         Ok(buf)
     }
 }
