@@ -1,14 +1,45 @@
 use std::iter::Iterator;
 
+#[derive(Clone, Copy, Debug)]
 pub struct Coordinate {
     pub x: u32,
     pub y: u32
 }
 
-pub trait Selection {
+pub trait Selection : Sized + Copy {
     fn coordinates(&self) -> Vec<Coordinate>;
+
+    fn and<B: Selection>(&self, b: B) -> AndSelection<Self, B> {
+        AndSelection::new(*self, b)
+    }
 }
 
+#[derive(Clone, Copy, Debug)]
+struct AndSelection<A: Selection, B: Selection> {
+    a: A,
+    b: B
+}
+
+impl<A: Selection, B: Selection> AndSelection<A, B> {
+    fn new(a: A, b: B) -> AndSelection<A, B> {
+        AndSelection { a: a, b: b }
+    }
+}
+
+impl<A: Selection, B: Selection> Selection for AndSelection<A, B> {
+    fn coordinates(&self) -> Vec<Coordinate> {
+        let mut coords = vec![];
+        for coord in self.a.coordinates() {
+            coords.push(coord);
+        }
+        for coord in self.b.coordinates() {
+            coords.push(coord);
+        }
+        coords
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Rectangle {
     pub x: u32,
     pub y: u32,
