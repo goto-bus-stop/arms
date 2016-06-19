@@ -14,6 +14,12 @@ pub trait Selection : Sized + Copy {
     }
 }
 
+impl Selection for Coordinate {
+    fn coordinates(&self) -> Vec<Coordinate> {
+        vec![*self]
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 struct AndSelection<A: Selection, B: Selection> {
     a: A,
