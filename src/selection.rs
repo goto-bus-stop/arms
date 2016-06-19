@@ -6,6 +6,12 @@ pub struct Coordinate {
     pub y: u32
 }
 
+impl Coordinate {
+    pub fn new(x: u32, y: u32) -> Coordinate {
+        Coordinate { x: x, y: y }
+    }
+}
+
 pub trait Selection : Sized + Copy {
     fn coordinates(&self) -> Vec<Coordinate>;
 
