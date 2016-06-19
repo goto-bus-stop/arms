@@ -1,6 +1,6 @@
 use consts::{Terrain, MapSize};
 use map::{MapTile, Map};
-use selection::Rectangle;
+use selection::{Rectangle, Selection};
 
 pub struct World {
     pub base_terrain: Terrain,
@@ -33,13 +33,11 @@ impl World {
                 ));
             }
         }
-        let rect = Rectangle {
-            x: 20,
-            y: 20,
-            width: 20,
-            height: 20
-        };
-        map.flatten_to(rect, 4);
+        let selection = Rectangle::new(20, 20, 20, 20).and(Rectangle::new(5, 5, 5, 5));
+        map.flatten_to(selection, 4);
+
+        map.elevate(30, 30, 2);
+
         map
     }
 }

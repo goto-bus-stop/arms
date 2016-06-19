@@ -2,7 +2,7 @@ use std::io::{Write, Error};
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
 
-use selection::Rectangle;
+use selection::Selection;
 
 pub struct MapTile {
     terrain: u8,
@@ -111,24 +111,23 @@ impl Map {
         }
     }
 
-    pub fn flatten(&mut self, part: Rectangle) {
+    pub fn flatten<T: Selection>(&mut self, selection: T) {
         let mut weighted_elevation = 0;
-        for x in part.x..(part.x + part.width) {
-            for y in part.y..(part.y + part.height) {
-                match self.tile_at(x, y) {
-                    Some(tile) => weighted_elevation += tile.elevation as u32,
-                    None => ()
-                }
+        let mut tiles = 0;
+        for coord in selection.coordinates() {
+            match self.tile_at(coord.x, coord.y) {
+                Some(tile) => {
+                    tiles += 1;
+                    weighted_elevation += tile.elevation as u32;
+                },
+                None => ()
             }
         }
-        let tiles = part.width * part.height;
-        self.flatten_to(part, (weighted_elevation / tiles) as u8)
+        self.flatten_to(selection, (weighted_elevation / tiles) as u8)
     }
-    pub fn flatten_to(&mut self, part: Rectangle, elevation: u8) {
-        for x in part.x..(part.x + part.width) {
-            for y in part.y..(part.y + part.height) {
-                self.elevate(x, y, elevation)
-            }
+    pub fn flatten_to<T: Selection>(&mut self, selection: T, elevation: u8) {
+        for coord in selection.coordinates() {
+            self.elevate(coord.x, coord.y, elevation)
         }
     }
 
