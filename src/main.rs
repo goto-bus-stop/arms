@@ -1,6 +1,7 @@
 extern crate byteorder;
 extern crate flate2;
 extern crate rand;
+extern crate hlua;
 
 mod consts;
 mod map;
@@ -8,6 +9,7 @@ mod player;
 mod selection;
 mod unit;
 mod world;
+mod scripting;
 
 use std::io;
 use std::io::prelude::*;
@@ -15,6 +17,7 @@ use std::fs::File;
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
 use flate2::{Compression, Flush, Compress, Status};
+use hlua::LuaError;
 
 use consts::{Civilization, UnitType, Terrain};
 use map::Map;
@@ -407,6 +410,17 @@ impl<'a> ScenImage<'a> {
 }
 
 fn test(filename: &str) -> Result<(), io::Error> {
+    let mut f = try!(File::open("Scenario.lua"));
+    let mut s = String::new();
+    try!(f.read_to_string(&mut s));
+    match scripting::runScript(&s) {
+        Ok(()) => (),
+        Err(LuaError::SyntaxError(message)) => panic!(message),
+        Err(LuaError::ExecutionError(message)) => panic!(message),
+        Err(LuaError::ReadError(_)) => panic!("hlua io error"),
+        Err(LuaError::WrongType) => panic!("wrong type"),
+    };
+
     let mut buf = try!(File::create(filename));
     let mut world = World::new();
     world.base_terrain = Terrain::SnowRoad;
