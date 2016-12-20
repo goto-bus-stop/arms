@@ -1,6 +1,7 @@
 import insert from table
 import Map from require 'arms/Map'
 import Player from require 'arms/Player'
+import Messages from require 'arms/Messages'
 import Trigger from require 'arms/Trigger'
 import terrain, unit from require 'arms/constants'
 import encode from require 'json'
@@ -8,6 +9,7 @@ import encode from require 'json'
 class Arms
   new: =>
     @map = Map!
+    @messages = Messages!
     @triggers = {}
     @players = {}
 
@@ -36,6 +38,7 @@ class Arms
     return trig
 
   to_json: => {
+    messages: @messages\to_json!
     map: @map\to_json!
     triggers: [t\to_json! for t in *@triggers]
   }

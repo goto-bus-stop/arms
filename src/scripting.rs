@@ -15,11 +15,14 @@ pub fn runScript(text: &str) -> Result<(), LuaError> {
         Arms = require('arms/main')
         Arms:_set_random_map_seed({seed})
         Arms:_set_number_of_players({players})
+
+        -- Globals
         map = Arms.map
         trigger = Arms.trigger
         messages = Arms.messages
         terrain = Arms.terrain
         unit = Arms.unit
+        messages = Arms.messages
     ", dir = dir.display(), seed = seed, players = num_players);
     try!(lua.execute(&src));
     try!(lua.execute(text));
