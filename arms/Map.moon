@@ -3,8 +3,8 @@ import terrain from require 'arms/constants'
 class Map
   new: =>
     @size =
-      x: 220
-      y: 220
+      x: 96
+      y: 96
     @data =
       base_terrain: terrain.grass1
       base_elevation: 1
