@@ -414,7 +414,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
     let mut s = String::new();
     try!(f.read_to_string(&mut s));
     match scripting::runScript(&s) {
-        Ok(()) => (),
+        Ok(result) => println!("Got scenario JSON: {}", result),
         Err(LuaError::SyntaxError(message)) => panic!(message),
         Err(LuaError::ExecutionError(message)) => panic!(message),
         Err(LuaError::ReadError(_)) => panic!("hlua io error"),

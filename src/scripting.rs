@@ -4,13 +4,15 @@ use std::env;
 use std::fs::File;
 use hlua::{Lua, LuaError};
 
-pub fn runScript(text: &str) -> Result<(), LuaError> {
+// Whelp this function looks like a mess! :D
+pub fn runScript(text: &str) -> Result<String, LuaError> {
     let mut lua = Lua::new();
     lua.openlibs();
+
     let dir = env::current_dir().unwrap();
     let seed = 1;
     let num_players = 2;
-    let src = format!("
+    try!(lua.execute(&format!("
         package.path = package.path .. ';{dir}/lua/?.lua'
         Arms = require('arms/main')
         Arms:_set_random_map_seed({seed})
@@ -23,9 +25,15 @@ pub fn runScript(text: &str) -> Result<(), LuaError> {
         terrain = Arms.terrain
         unit = Arms.unit
         messages = Arms.messages
-    ", dir = dir.display(), seed = seed, players = num_players);
-    try!(lua.execute(&src));
+    ",
+        dir = dir.display(),
+        seed = seed,
+        players = num_players
+    )));
     try!(lua.execute(text));
-    try!(lua.execute("Arms:print()"));
-    Ok(())
+
+    // Should be able to move this value somehow with some lifetime fun, instead
+    // of cloning?
+    let result: String = try!(lua.execute("return require('arms/main'):to_string()"));
+    Ok(result.clone())
 }

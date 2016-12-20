@@ -43,7 +43,8 @@ class Arms
     triggers: [t\to_json! for t in *@triggers]
   }
 
-  print: => print encode @to_json!
+  to_string: => encode @to_json!
+  print: => print @to_string!
 
 -- Exports
 return Arms!
