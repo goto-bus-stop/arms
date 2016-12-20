@@ -19,7 +19,7 @@ Something liiiike…
 (VERY rough draft)
 
 ```lua
-world.baseTerrain = Terrain.grass1
+map:base_terrain(terrain.grass1)
 
 -- like "<PLAYER_SETUP> random_placement"
 players:distribute_randomly()
@@ -34,28 +34,28 @@ world.elevation
   -- Elevation.* are noise generators.
   :generate(Elevation.mountainy)
 
-for player in players do
-  local tc = player:place(Building.town_center):at(player.position)
+for_each_player(function(player)
+  local tc = player:place(unit.town_center):at(player.position)
   -- place three villagers at a random location, 3 tiles away from the town center
   -- using `player.starting_villagers` because it'll account for Chinese and
   -- Mayan bonuses.
   player
-    :place(Unit.villager, player.starting_villagers)
+    :place(unit.villager, player.starting_villagers)
     :near(tc, 3)
   -- place a scout 8 tiles away from the town center
-  player:place(Unit.scout):near(tc, 8)
+  player:place(unit.scout):near(tc, 8)
   -- place 6 sheep between 10 and 22 tiles away from the town center
-  player:place(Unit.sheep, 6):near(tc, 10, 22)
-end
+  player:place(unit.sheep, 6):near(tc, 10, 22)
+end)
 
 -- generating triggers!
-triggers.when(
-  triggers.is_in_area(player, Unit.scout, get_an_area_description_somehow()),
-  -- the `t` here will be some kind of magic trigger effect table
-  function (t)
-    t.kill_units_in_area()
-  end
-)
+trigger()
+  :conditions(function(condition)
+    condition\is_in_area(player, unit.scout, get_an_area_description_somehow())
+  end)
+  :effects(function(effect)
+    effect\kill_objects('all', get_an_area_description_somehow())
+  end)
 ```
 
 ## ⮳ References
