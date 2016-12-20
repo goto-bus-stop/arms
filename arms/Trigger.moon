@@ -1,4 +1,5 @@
 import insert from table
+import DataObject from require 'arms/DataObject'
 
 COND_NONE = 0
 COND_BRING_OBJECT_TO_AREA = 1
@@ -67,29 +68,22 @@ class Area
     @y2 = y2
 
 -- Represents a trigger condition.
-class Condition
-  new: (type) =>
-    @data =
-      type: type
-      amount: nil -- Amount
-      resource: nil -- Resource
-      object_source: nil -- Object Source ID (Not same as effect)
-      object_location: nil -- Object Location ID
-      unit_constant: nil -- Unit Constant
-      player: nil -- Player Source
-      technology: nil -- Technology
-      time: nil -- Time
-      inverted: false -- Inverted for UP 1.4
-      area: Area!
-      unit_group: nil -- Unit Group
-      unit_type: nil -- Unit Type
-      ai_signal: nil -- AI Signal
-
-  set: (props) =>
-    for k, v in pairs props do @data[k] = v
-    @
-
-  to_json: => @data
+class Condition extends DataObject
+  new: (type) => super
+    type: type
+    amount: nil -- Amount
+    resource: nil -- Resource
+    object_source: nil -- Object Source ID (Not same as effect)
+    object_location: nil -- Object Location ID
+    unit_constant: nil -- Unit Constant
+    player: nil -- Player Source
+    technology: nil -- Technology
+    time: nil -- Time
+    inverted: false -- Inverted for UP 1.4
+    area: Area!
+    unit_group: nil -- Unit Group
+    unit_type: nil -- Unit Type
+    ai_signal: nil -- AI Signal
 
 -- Represents a Timer condition.
 class ConditionTimer extends Condition
@@ -110,37 +104,30 @@ class Conditions
   to_json: => [cond\to_json! for cond in *@conditions]
 
 -- Represents a trigger effect.
-class Effect
-  new: (type) =>
-    @data =
-      type: type -- Effect type
-      goal: nil -- AI Goal
-      amount: nil -- Amount
-      resource: nil -- Resource
-      diplomacy: nil -- Diplomacy
-      object_location: nil -- Object Location ID
-      unit_constant: nil -- Unit constant
-      player: nil -- Player Source
-      player_target: nil -- Player Target
-      technology: nil -- Technology
-      string_table: nil -- String Table
-      unknown: nil -- Unknown
-      time: nil -- Time
-      trigger_index: nil -- Trigger Index
-      location: Point!
-      area: Area!
-      unit_group: nil -- Unit Group
-      unit_type: nil -- Unit Type
-      panel: nil -- Panel
-      text: nil -- Text
-      sound: nil -- Sound
-      object_ids: nil -- Objects Ids
-
-  set: (props) =>
-    for k, v in pairs props do @data[k] = v
-    @
-
-  to_json: => @data
+class Effect extends DataObject
+  new: (type) => super
+    type: type -- Effect type
+    goal: nil -- AI Goal
+    amount: nil -- Amount
+    resource: nil -- Resource
+    diplomacy: nil -- Diplomacy
+    object_location: nil -- Object Location ID
+    unit_constant: nil -- Unit constant
+    player: nil -- Player Source
+    player_target: nil -- Player Target
+    technology: nil -- Technology
+    string_table: nil -- String Table
+    unknown: nil -- Unknown
+    time: nil -- Time
+    trigger_index: nil -- Trigger Index
+    location: Point!
+    area: Area!
+    unit_group: nil -- Unit Group
+    unit_type: nil -- Unit Type
+    panel: nil -- Panel
+    text: nil -- Text
+    sound: nil -- Sound
+    object_ids: nil -- Objects Ids
 
 -- Represents a "Kill Object" effect.
 class EffectKillObjects extends Effect
