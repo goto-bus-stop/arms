@@ -2,6 +2,7 @@ extern crate byteorder;
 extern crate flate2;
 extern crate rand;
 extern crate hlua;
+extern crate json;
 
 mod consts;
 mod map;
@@ -383,6 +384,7 @@ impl<'a> ScenMessages<'a> {
 
     fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
+        // String table indices
         for _ in 0..6 {
             try!(buf.write_i32::<LE>(0));
         }
@@ -413,8 +415,11 @@ fn test(filename: &str) -> Result<(), io::Error> {
     let mut f = try!(File::open("Scenario.lua"));
     let mut s = String::new();
     try!(f.read_to_string(&mut s));
-    match scripting::runScript(&s) {
-        Ok(result) => println!("Got scenario JSON: {}", result),
+    let map = match scripting::runScript(&s) {
+        Ok(result) => match json::parse(&result) {
+            Ok(mut json) => Map::from_json(json["map"].take()),
+            Err(_) => panic!("Json error"),
+        },
         Err(LuaError::SyntaxError(message)) => panic!(message),
         Err(LuaError::ExecutionError(message)) => panic!(message),
         Err(LuaError::ReadError(_)) => panic!("hlua io error"),
@@ -479,7 +484,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
             height: 0,
             include: 1,
         },
-        map: world.generate_map(),
+        map: map,
     };
 
     buf.write_all(&try!(header.to_bytes())).map(|_| ())

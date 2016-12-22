@@ -1,6 +1,7 @@
 use std::io::{Write, Error};
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
+use json::JsonValue;
 
 use selection::Selection;
 
@@ -47,6 +48,21 @@ impl Map {
             size: size,
             tiles: Vec::with_capacity((size * size) as usize)
         }
+    }
+
+    pub fn from_json(json: JsonValue) -> Map {
+        let mut map = Map::new(match json["size"][0].as_u32() {
+            Some(val) => val,
+            None => 0,
+        });
+        for row in json["tiles"].members() {
+            for cell in row.members() {
+                map.tiles.push(
+                    MapTile::new(cell["t"].as_u8().unwrap(), cell["e"].as_u8().unwrap())
+                );
+            }
+        }
+        map
     }
 
     pub fn tile_at(&self, x: u32, y: u32) -> Option<MapTile> {
