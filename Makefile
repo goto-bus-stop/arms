@@ -1,4 +1,10 @@
-lua:
-	moonc -t lua arms/
+all: rocks crates
 
-.PHONY: lua
+rocks:
+	$(MAKE) -C rocks/arms compile
+
+crates: rocks
+	$(MAKE) -C crates/scx
+	$(MAKE) -C crates/arms
+
+.PHONY: rocks crates

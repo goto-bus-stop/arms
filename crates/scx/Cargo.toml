@@ -1,0 +1,10 @@
+[package]
+
+name = "arms_scx"
+version = "0.0.0"
+authors = [ "Renée Kooi <me@idlebeaver.ninja>" ]
+
+[dependencies]
+
+byteorder = "0.4"
+flate2 = "0.2.11"

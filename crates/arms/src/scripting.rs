@@ -1,11 +1,10 @@
 extern crate hlua;
 
 use std::env;
-use std::fs::File;
 use hlua::{Lua, LuaError};
 
 // Whelp this function looks like a mess! :D
-pub fn runScript(text: &str) -> Result<String, LuaError> {
+pub fn run_lua(text: &str) -> Result<String, LuaError> {
     let mut lua = Lua::new();
     lua.openlibs();
 

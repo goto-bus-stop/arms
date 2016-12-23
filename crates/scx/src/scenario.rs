@@ -1,64 +1,45 @@
-extern crate byteorder;
-extern crate flate2;
-extern crate rand;
-extern crate hlua;
-extern crate json;
-
-mod consts;
-mod map;
-mod player;
-mod selection;
-mod unit;
-mod world;
-mod scripting;
-
 use std::io;
 use std::io::prelude::*;
-use std::fs::File;
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
 use flate2::{Compression, Flush, Compress, Status};
-use hlua::LuaError;
 
-use consts::{Civilization, UnitType, Terrain};
 use map::Map;
-use player::{BaseResources, Player};
-use unit::Unit;
-use world::World;
+use player::Player;
 
 const HEADER_SEPARATOR: u32 = 0xFFFFFF9D;
 
-struct ScenHeader<'a> {
-    version: &'a[u8; 4],
-    header_type: i32,
-    timestamp: i32,
-    instructions: &'a str,
-    players: Vec<Player<'a>>,
-    filename: &'a str,
-    messages: ScenMessages<'a>,
-    image: ScenImage<'a>,
-    map: Map,
+pub struct ScenHeader<'a> {
+    pub version: &'a[u8; 4],
+    pub header_type: i32,
+    pub timestamp: i32,
+    pub instructions: &'a str,
+    pub players: Vec<Player<'a>>,
+    pub filename: &'a str,
+    pub messages: ScenMessages<'a>,
+    pub image: ScenImage<'a>,
+    pub map: Map,
 }
 
-struct ScenMessages<'a> {
-    objectives: &'a str,
-    hints: &'a str,
-    scouts: &'a str,
-    history: &'a str,
-    victory: &'a str,
-    loss: &'a str,
+pub struct ScenMessages<'a> {
+    pub objectives: &'a str,
+    pub hints: &'a str,
+    pub scouts: &'a str,
+    pub history: &'a str,
+    pub victory: &'a str,
+    pub loss: &'a str,
 }
 
-struct ScenImage<'a> {
-    filename: &'a str,
-    included: bool,
-    width: i32,
-    height: i32,
-    include: i16,
+pub struct ScenImage<'a> {
+    pub filename: &'a str,
+    pub included: bool,
+    pub width: i32,
+    pub height: i32,
+    pub include: i16,
 }
 
 impl<'a> ScenHeader<'a> {
-    fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
+    pub fn to_bytes(&self) -> Result<Vec<u8>, io::Error> {
         let mut buf = vec![];
 
         let instructions_length = self.instructions.len() as i32;
@@ -191,8 +172,8 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write(&vec![0; scenario_goals_size]));
 
         // Diplomacy
-        for from_player in 0..16 {
-            for to_player in 0..16 {
+        for _ in 0..16 {
+            for _ in 0..16 {
                 try!(zlib_buf.write_i32::<LE>(0));
             }
         }
@@ -203,15 +184,15 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write_u32::<LE>(HEADER_SEPARATOR));
 
         // Allied victory
-        for player in 0..16 {
+        for _ in 0..16 {
             try!(zlib_buf.write_i32::<LE>(0));
         }
 
         // Technology count??
-        for player in 0..8 {
+        for _ in 0..8 {
             try!(zlib_buf.write_i32::<LE>(0));
         }
-        for player in 0..8 {
+        for _ in 0..8 {
             try!(zlib_buf.write_i32::<LE>(-1));
         }
         // Technology something??
@@ -220,10 +201,10 @@ impl<'a> ScenHeader<'a> {
         }
 
         // Unit count??
-        for player in 0..8 {
+        for _ in 0..8 {
             try!(zlib_buf.write_i32::<LE>(0));
         }
-        for player in 0..8 {
+        for _ in 0..8 {
             try!(zlib_buf.write_i32::<LE>(-1));
         }
         // Unit something??
@@ -232,10 +213,10 @@ impl<'a> ScenHeader<'a> {
         }
 
         // Building count??
-        for player in 0..8 {
+        for _ in 0..8 {
             try!(zlib_buf.write_i32::<LE>(0));
         }
-        for player in 0..8 {
+        for _ in 0..8 {
             try!(zlib_buf.write_i32::<LE>(-1));
         }
         // Buildings something??
@@ -408,91 +389,5 @@ impl<'a> ScenImage<'a> {
         try!(buf.write_i32::<LE>(self.height));
         try!(buf.write_i16::<LE>(self.include));
         Ok(buf)
-    }
-}
-
-fn test(filename: &str) -> Result<(), io::Error> {
-    let mut f = try!(File::open("Scenario.lua"));
-    let mut s = String::new();
-    try!(f.read_to_string(&mut s));
-    let map = match scripting::runScript(&s) {
-        Ok(result) => match json::parse(&result) {
-            Ok(mut json) => Map::from_json(json["map"].take()),
-            Err(_) => panic!("Json error"),
-        },
-        Err(LuaError::SyntaxError(message)) => panic!(message),
-        Err(LuaError::ExecutionError(message)) => panic!(message),
-        Err(LuaError::ReadError(_)) => panic!("hlua io error"),
-        Err(LuaError::WrongType) => panic!("wrong type"),
-    };
-
-    let mut buf = try!(File::create(filename));
-    let mut world = World::new();
-    world.base_terrain = Terrain::SnowRoad;
-
-    let header = ScenHeader {
-        version: b"1.21",
-        header_type: 2,
-        timestamp: 1451422223,
-        instructions: "Build a fancy-pants base!",
-        filename: filename,
-        players: vec![
-            Player {
-                name: "Hello World, from Rust!",
-                active: 1,
-                human: 2,
-                civilization: Civilization::Britons,
-                resources: BaseResources {
-                    wood: 100,
-                    food: 200,
-                    gold: 300,
-                    stone: 400,
-                    ore: 0,
-                },
-                units: vec![
-                    Unit::new(UnitType::ScoutCavalry, 110.0, 110.0),
-                    Unit::new(UnitType::ScoutCavalry, 111.0, 110.0),
-                ],
-            },
-            Player {
-                name: "Filthy Opponent",
-                active: 1,
-                human: 0,
-                civilization: Civilization::Koreans,
-                resources: BaseResources {
-                    wood: 200,
-                    food: 200,
-                    gold: 100,
-                    stone: 200,
-                    ore: 0,
-                },
-                units: vec![],
-            },
-        ],
-        messages: ScenMessages {
-            objectives: "",
-            hints: "",
-            scouts: "",
-            history: "",
-            victory: "",
-            loss: "",
-        },
-        image: ScenImage {
-            filename: "",
-            included: false,
-            width: 0,
-            height: 0,
-            include: 1,
-        },
-        map: map,
-    };
-
-    buf.write_all(&try!(header.to_bytes())).map(|_| ())
-}
-
-fn main() {
-    match test("Test Scenario.scx") {
-        Ok(()) => (),
-        Err(e) => panic!("oops {}", e)
     }
 }

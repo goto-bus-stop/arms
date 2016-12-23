@@ -1,4 +1,4 @@
-use std::io::{Write, Error};
+use std::io::Error;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
 
 use consts::UnitType;

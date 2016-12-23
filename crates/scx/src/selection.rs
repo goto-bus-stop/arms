@@ -1,5 +1,3 @@
-use std::iter::Iterator;
-
 #[derive(Clone, Copy, Debug)]
 pub struct Coordinate {
     pub x: u32,

@@ -1,5 +1,3 @@
-use byteorder::{LittleEndian as LE, WriteBytesExt};
-
 use consts::Civilization;
 use unit::Unit;
 

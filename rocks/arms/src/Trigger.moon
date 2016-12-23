@@ -188,7 +188,7 @@ class Trigger
 
   -- Configure trigger conditions using a callback.
   --
-  --    trigger\conditions (condition) => condition\timer(10)
+  --    trigger\conditions (condition) -> condition\timer(10)
   --
   conditions: (callback) =>
     callback @_conditions
@@ -196,7 +196,7 @@ class Trigger
 
   -- Configure trigger effects using a callback.
   --
-  --    trigger\effects (effect) => effect\chat(1, 'Hello!')
+  --    trigger\effects (effect) -> effect\chat(1, 'Hello!')
   --
   effects: (callback) =>
     callback @_effects

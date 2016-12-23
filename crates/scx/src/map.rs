@@ -1,7 +1,6 @@
 use std::io::{Write, Error};
 use std::mem;
 use byteorder::{LittleEndian as LE, WriteBytesExt};
-use json::JsonValue;
 
 use selection::Selection;
 
@@ -50,21 +49,6 @@ impl Map {
         }
     }
 
-    pub fn from_json(json: JsonValue) -> Map {
-        let mut map = Map::new(match json["size"][0].as_u32() {
-            Some(val) => val,
-            None => 0,
-        });
-        for row in json["tiles"].members() {
-            for cell in row.members() {
-                map.tiles.push(
-                    MapTile::new(cell["t"].as_u8().unwrap(), cell["e"].as_u8().unwrap())
-                );
-            }
-        }
-        map
-    }
-
     pub fn tile_at(&self, x: u32, y: u32) -> Option<MapTile> {
         let idx = (self.size * y + x) as usize;
         if idx < self.tiles.len() {
@@ -102,12 +86,20 @@ impl Map {
         ];
         let mut neighbours = vec![];
         for candidate in candidates {
-            if 0 <= candidate.0 && candidate.0 < self.size &&
-               0 <= candidate.1 && candidate.1 < self.size {
+            if candidate.0 < self.size && candidate.1 < self.size {
                 neighbours.push(candidate)
             }
         }
         neighbours
+    }
+
+    pub fn elevate_raw(&mut self, x: u32, y: u32, elevation: u8) {
+        match self.tile_at(x, y) {
+            Some(tile) => {
+                self.put_tile(x, y, tile.with_elevation(elevation));
+            },
+            None => ()
+        }
     }
 
     pub fn elevate(&mut self, x: u32, y: u32, elevation: u8) {
