@@ -1,4 +1,4 @@
-import terrain from require 'arms/constants'
+import terrain from require 'arms.constants'
 
 class Tile
   new: (@terrain_type, @elevation) =>

@@ -1,5 +1,5 @@
 import insert from table
-import DataObject from require 'arms/DataObject'
+import DataObject from require 'arms.DataObject'
 
 COND_NONE = 0
 COND_BRING_OBJECT_TO_AREA = 1
@@ -188,7 +188,7 @@ class Trigger
 
   -- Configure trigger conditions using a callback.
   --
-  --    trigger\conditions (condition) => condition\timer(10)
+  --    trigger\conditions (condition) -> condition\timer(10)
   --
   conditions: (callback) =>
     callback @_conditions
@@ -196,7 +196,7 @@ class Trigger
 
   -- Configure trigger effects using a callback.
   --
-  --    trigger\effects (effect) => effect\chat(1, 'Hello!')
+  --    trigger\effects (effect) -> effect\chat(1, 'Hello!')
   --
   effects: (callback) =>
     callback @_effects

@@ -1,9 +1,9 @@
 import insert from table
-import Map from require 'arms/Map'
-import Player from require 'arms/Player'
-import Messages from require 'arms/Messages'
-import Trigger from require 'arms/Trigger'
-import terrain, unit from require 'arms/constants'
+import Map from require 'arms.Map'
+import Player from require 'arms.Player'
+import Messages from require 'arms.Messages'
+import Trigger from require 'arms.Trigger'
+import terrain, unit from require 'arms.constants'
 import encode from require 'json'
 
 class Arms

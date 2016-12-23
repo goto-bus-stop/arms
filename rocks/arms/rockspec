@@ -1,0 +1,12 @@
+package = "Arms"
+version = "0.1-0"
+source = {
+  url = "https://github.com/goto-bus-stop/arms"
+}
+description = {
+  summary = "",
+  homepage = "https://goto-bus-stop.github.io/arms",
+  license = "MIT"
+}
+dependencies = {}
+build = {}
