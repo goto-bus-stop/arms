@@ -6,6 +6,6 @@ authors = [ "Renée Kooi <me@idlebeaver.ninja>" ]
 
 [dependencies]
 
-hlua = "0.1.9"
+lua = "0.0.9"
 json = "0.11.3"
 arms_scx = { path = "../scx" }

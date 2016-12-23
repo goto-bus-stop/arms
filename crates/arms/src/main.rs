@@ -1,4 +1,4 @@
-extern crate hlua;
+extern crate lua;
 extern crate json;
 extern crate arms_scx as scx;
 
@@ -8,7 +8,6 @@ mod scripting;
 use std::io;
 use std::io::prelude::*;
 use std::fs::File;
-use hlua::LuaError;
 
 use json_revive::JsonRevive;
 use scx::{
@@ -32,10 +31,7 @@ fn test(filename: &str) -> Result<(), io::Error> {
             Ok(mut json) => Map::from_json(json["map"].take()),
             Err(_) => panic!("Json error"),
         },
-        Err(LuaError::SyntaxError(message)) => panic!(message),
-        Err(LuaError::ExecutionError(message)) => panic!(message),
-        Err(LuaError::ReadError(_)) => panic!("hlua io error"),
-        Err(LuaError::WrongType) => panic!("wrong type"),
+        Err(err) => panic!("err {}", err),
     };
 
     let mut buf = try!(File::create(filename));
