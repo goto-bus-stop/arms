@@ -1,5 +1,5 @@
 import insert from table
-import DataObject from require 'arms/DataObject'
+import DataObject from require 'arms.DataObject'
 
 COND_NONE = 0
 COND_BRING_OBJECT_TO_AREA = 1

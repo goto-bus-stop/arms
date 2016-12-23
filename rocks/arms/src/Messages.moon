@@ -1,4 +1,4 @@
-import DataObject from require 'arms/DataObject'
+import DataObject from require 'arms.DataObject'
 
 class Messages extends DataObject
   new: => super
