@@ -44,6 +44,25 @@ fn load_config(mut state: &mut lua::State, seed: u32, num_players: u8) -> Result
     to_result(state.do_string(config))
 }
 
+// Validate source code by parsing it.
+fn validate_source(mut state: &mut lua::State, source: &str) -> Result<(), Error> {
+    // Attempt to load the source.
+    try!(to_result(state.load_string(source)));
+    // Unload source if it parsed successfully.
+    state.pop(1);
+    Ok(())
+}
+
+fn run_noreturn(mut state: &mut lua::State, text: &str) -> Result<(), Error> {
+    try!(validate_source(state, text));
+    // Wrap the source in a function so top-level returns don't break us.
+    to_result(state.do_string(&format!("
+        (function()
+            {}
+        end)()
+    ", text)))
+}
+
 // Whelp this function looks like a mess! :D
 pub fn run_lua(text: &str) -> Result<String, Error> {
     let mut lua = lua::State::new();
@@ -52,7 +71,7 @@ pub fn run_lua(text: &str) -> Result<String, Error> {
     let result = load_arms_library(&mut lua)
         .and_then(|_| load_prelude(&mut lua))
         .and_then(|_| load_config(&mut lua, 1, 2))
-        .and_then(|_| to_result(lua.do_string(text)))
+        .and_then(|_| run_noreturn(&mut lua, text))
         .and_then(|_| to_result(lua.do_string("return require('arms'):to_string()")))
         .or_else(|err| {
             println!("Error: {}", lua.to_str(1).unwrap());
