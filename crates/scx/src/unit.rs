@@ -4,13 +4,13 @@ use byteorder::{LittleEndian as LE, WriteBytesExt};
 use consts::UnitType;
 
 pub struct Unit {
-    id: u32,
-    unit_type: UnitType,
-    x: f32,
-    y: f32,
-    angle: f32,
-    frame: u16,
-    garrison_id: i32,
+    pub id: u32,
+    pub unit_type: UnitType,
+    pub x: f32,
+    pub y: f32,
+    pub angle: f32,
+    pub frame: u16,
+    pub garrison_id: u32,
 }
 
 impl Unit {
@@ -36,7 +36,7 @@ impl Unit {
         try!(buf.write_i8(2));
         try!(buf.write_f32::<LE>(self.angle));
         try!(buf.write_u16::<LE>(self.frame));
-        try!(buf.write_i32::<LE>(self.garrison_id));
+        try!(buf.write_u32::<LE>(self.garrison_id));
         Ok(buf)
     }
 }

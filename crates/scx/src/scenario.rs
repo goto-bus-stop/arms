@@ -14,7 +14,7 @@ pub struct ScenHeader<'a> {
     pub header_type: i32,
     pub timestamp: i32,
     pub instructions: &'a str,
-    pub players: Vec<Player<'a>>,
+    pub players: Vec<Player>,
     pub filename: &'a str,
     pub messages: ScenMessages<'a>,
     pub image: ScenImage<'a>,
@@ -58,7 +58,7 @@ impl<'a> ScenHeader<'a> {
         try!(zlib_buf.write_f32::<LE>(1.22 /* UserPatch */));
         for i in 0..16 {
             if self.players.len() > i {
-                let name = self.players[i].name;
+                let name = &self.players[i].name;
                 try!(zlib_buf.write_all(name.as_bytes()));
                 try!(zlib_buf.write_all(&vec![0; 256 - name.len()]));
             } else {

@@ -53,6 +53,11 @@ EFFECT_CHANGE_OBJECT_HP = 27
 EFFECT_CHANGE_OBJECT_ATTACK = 28
 EFFECT_STOP_UNIT = 29
 
+trigger_id = 1
+next_id = ->
+  trigger_id = trigger_id + 1
+  trigger_id
+
 -- Represents a location in a trigger condition or effect.
 class Point
   new: (x = 0, y = 0) =>
@@ -133,7 +138,8 @@ class Effect extends DataObject
 class EffectKillObjects extends Effect
   new: => super EFFECT_KILL_OBJECTS
   -- Set the player whose objects to kill.
-  of_player: (player) => @set :player
+  of_player: (player) => @set
+    player: if type(player) == 'table' then player.data.number else player
   -- Set the type of objects to kill.
   of_type: (type) =>
     @set unit_type: switch type
@@ -149,7 +155,8 @@ class EffectKillObjects extends Effect
 class EffectChat extends Effect
   new: => super EFFECT_SEND_CHAT
   -- Set the target of the chat message.
-  to: (player) => @set :player
+  to: (player) => @set player:
+    player: if type(player) == 'table' then player.data.number else player
   -- Set the contents of the chat message.
   text: (message) => @set text: message
 
@@ -157,7 +164,7 @@ class EffectChat extends Effect
 class EffectActivate extends Effect
   new: => super EFFECT_ACTIVATE_TRIGGER
   -- Set the trigger to activate.
-  trigger: (trigger) => @set :trigger
+  trigger: (trigger) => @set trigger: trigger.id
 
 -- Builder for trigger effects.
 class Effects
@@ -182,6 +189,7 @@ class Effects
 -- Represents a trigger.
 class Trigger
   new: (name = "") =>
+    @id = next_id!
     @_name = name
     @_conditions = Conditions!
     @_effects = Effects!
@@ -203,6 +211,7 @@ class Trigger
     @
 
   to_json: => {
+    id: @id
     name: @_name
     conditions: @_conditions\to_json!
     effects: @_effects\to_json!

@@ -9,8 +9,8 @@ pub struct BaseResources {
     pub ore: u32,
 }
 
-pub struct Player<'a> {
-    pub name: &'a str,
+pub struct Player {
+    pub name: String,
     pub active: u32,
     pub human: u32,
     pub civilization: Civilization,
@@ -18,10 +18,22 @@ pub struct Player<'a> {
     pub units: Vec<Unit>,
 }
 
-impl<'a> Player<'a> {
-    pub fn empty<'b>() -> Player<'b> {
+impl BaseResources {
+    pub fn default() -> BaseResources {
+        BaseResources {
+            gold: 100,
+            wood: 200,
+            food: 200,
+            stone: 200,
+            ore: 0,
+        }
+    }
+}
+
+impl Player {
+    pub fn empty() -> Player {
         Player {
-            name: "",
+            name: String::from(""),
             active: 0,
             human: 0,
             civilization: Civilization::None,
@@ -33,6 +45,17 @@ impl<'a> Player<'a> {
                 ore: 0,
             },
             units: vec![],
+        }
+    }
+
+    pub fn with_units(self, units: Vec<Unit>) -> Player {
+        Player {
+            name: self.name,
+            active: self.active,
+            human: self.human,
+            civilization: self.civilization,
+            resources: self.resources,
+            units: units,
         }
     }
 }

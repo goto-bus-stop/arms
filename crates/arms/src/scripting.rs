@@ -25,8 +25,7 @@ fn load_arms_library(mut state: &mut lua::State) -> Result<(), Error> {
 
 fn load_prelude(mut state: &mut lua::State) -> Result<(), Error> {
     let prelude = "
-        print(package)
-        Arms = require('arms')
+        Arms = require 'arms'
         map = Arms.map
         trigger = Arms.trigger
         messages = Arms.messages
@@ -53,12 +52,12 @@ pub fn run_lua(text: &str) -> Result<String, Error> {
     let result = load_arms_library(&mut lua)
         .and_then(|_| load_prelude(&mut lua))
         .and_then(|_| load_config(&mut lua, 1, 2))
+        .and_then(|_| to_result(lua.do_string(text)))
+        .and_then(|_| to_result(lua.do_string("return require('arms'):to_string()")))
         .or_else(|err| {
             println!("Error: {}", lua.to_str(1).unwrap());
             Err(err)
-        })
-        .and_then(|_| to_result(lua.do_string(text)))
-        .and_then(|_| to_result(lua.do_string("return require('arms'):to_string()")));
+        });
 
     try!(result);
 
